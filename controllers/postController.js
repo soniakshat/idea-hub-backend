@@ -75,3 +75,40 @@ exports.getPostsByBusiness = async (req, res) => {
     res.status(500).json({ message: 'Error fetching posts by business', error: error.message });
   }
 };
+
+// Update a post by ID
+exports.updatePost = async (req, res) => {
+  try {
+    const { postId } = req.params; // Get post ID from the request parameters
+    const updatedData = req.body; // Get updated post data from the request body
+
+    // Find the post by ID and update it
+    const updatedPost = await Post.findByIdAndUpdate(postId, updatedData, { new: true });
+
+    if (!updatedPost) {
+      return res.status(404).json({ message: 'Post not found' });
+    }
+
+    res.status(200).json({ message: 'Post updated successfully', post: updatedPost });
+  } catch (error) {
+    res.status(500).json({ message: 'Error updating post', error: error.message });
+  }
+};
+
+// Delete a post by ID
+exports.deletePost = async (req, res) => {
+  try {
+    const { postId } = req.params; // Get post ID from the request parameters
+
+    // Find the post by ID and delete it
+    const deletedPost = await Post.findByIdAndDelete(postId);
+
+    if (!deletedPost) {
+      return res.status(404).json({ message: 'Post not found' });
+    }
+
+    res.status(200).json({ message: 'Post deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ message: 'Error deleting post', error: error.message });
+  }
+};

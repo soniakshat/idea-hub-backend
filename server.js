@@ -4,6 +4,7 @@ const express = require('express');
 const mongoose = require('mongoose');
 const dotenv = require('dotenv');
 const postRoutes = require('./routes/postRoutes');
+const userRoutes = require('./routes/userRoutes');
 
 // Load environment variables
 dotenv.config();
@@ -26,6 +27,9 @@ app.use(express.json());
 
 // Use the post routes
 app.use('/api/posts', postRoutes);
+
+// Use the auth routes
+app.use('/user', userRoutes);
 
 // Start the server
 const PORT = process.env.PORT || 3000;
