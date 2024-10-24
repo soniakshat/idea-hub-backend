@@ -6,6 +6,8 @@ const dotenv = require('dotenv');
 const postRoutes = require('./routes/postRoutes');
 const userRoutes = require('./routes/userRoutes');
 
+process.title = "ideahub-server";
+
 // Load environment variables
 dotenv.config();
 
@@ -32,7 +34,12 @@ app.use('/api/posts', postRoutes);
 app.use('/user', userRoutes);
 
 // Start the server
-const PORT = process.env.PORT || 3000;
+if (process.env.PORT == "" || process.env.PORT == null)
+{
+  console.error("No port set in env. Exiting the process...");
+}
+
+const PORT = process.env.PORT;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
