@@ -5,15 +5,37 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 
 // Register User
+// Register a new user
 exports.registerUser = async (req, res) => {
-    try {
-        const { name, email, password, department } = req.body;
-        const user = new User({ name, email, password, department });
-        await user.save();
-        res.status(201).json({ message: 'User created successfully' });
-    } catch (error) {
-        res.status(500).json({ error: 'Error creating user' });
-    }
+  try {
+      const { name, email, password, department } = req.body;
+
+      // Check if user already exists
+      const existingUser = await User.findOne({ email });
+      if (existingUser) {
+          return res.status(400).json({ message: 'User already exists' });
+      }
+
+      // Create new user
+      const hashedPassword = await bcrypt.hash(password, 10);  // Hash the password
+      const user = new User({
+          name,
+          email,
+          password: hashedPassword,
+          department
+      });
+
+      // Save user to the database
+      const savedUser = await user.save();
+
+      // Return user ID and success message in the response
+      res.status(201).json({
+          message: 'User created successfully 1',
+          user_id: savedUser._id   // Send back the user's ID
+      });
+  } catch (error) {
+      res.status(500).json({ message: 'Error registering user', error: error.message });
+  }
 };
 
 // Login User
@@ -29,6 +51,7 @@ exports.loginUser = async (req, res) => {
     res.json({ token });
 };
 
+  
 // Update user profile by ID
 exports.updateUserProfile = async (req, res) => {
     try {
@@ -47,7 +70,6 @@ exports.updateUserProfile = async (req, res) => {
       res.status(500).json({ message: 'Error updating user profile', error: error.message });
     }
   };
-
   // Get user profile by ID
 exports.getUserProfile = async (req, res) => {
     try {

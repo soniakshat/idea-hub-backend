@@ -24,6 +24,23 @@ mongoose.connect(process.env.MONGO_URI, {
 // Initialize Express
 const app = express();
 
+// Setup Cors
+const cors = require('cors');
+
+// app.use(cors());
+// Configure CORS middleware
+app.use(cors({
+  origin: '*', // Allow all origins temporarily
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], // Include OPTIONS
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true, // If using cookies or HTTP authentication
+}));
+
+// Handle preflight requests
+app.options('*', (req, res) => {
+  res.sendStatus(204); // Respond with no content
+});
+
 // Middleware to parse JSON bodies
 app.use(express.json());
 
