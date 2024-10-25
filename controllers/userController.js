@@ -8,47 +8,47 @@ const bcrypt = require('bcryptjs');
 // Register a new user
 exports.registerUser = async (req, res) => {
   try {
-      const { name, email, password, department } = req.body;
-
-      // Check if user already exists
-      const existingUser = await User.findOne({ email });
-      if (existingUser) {
-          return res.status(400).json({ message: 'User already exists' });
-      }
-
-      // Create new user
-      const hashedPassword = await bcrypt.hash(password, 10);  // Hash the password
-      const user = new User({
-          name,
-          email,
-          password: hashedPassword,
-          department
-      });
-
-      // Save user to the database
-      const savedUser = await user.save();
-
-      // Return user ID and success message in the response
-      res.status(201).json({
-          message: 'User created successfully 1',
-          user_id: savedUser._id   // Send back the user's ID
-      });
-  } catch (error) {
-      res.status(500).json({ message: 'Error registering user', error: error.message });
-  }
+        const { name, email, password, department } = req.body;
+        const user = new User({ name, email, password, department });
+        await user.save();
+        res.status(201).json({ message: 'User created successfully' });
+    } catch (error) {
+        res.status(500).json({ error: 'Error creating user' });
+    }
 };
 
 // Login User
 exports.loginUser = async (req, res) => {
+  try {
     const { email, password } = req.body;
+
+    // Find the user by email
     const user = await User.findOne({ email });
-    if (!user) return res.status(404).json({ error: 'User not found' });
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
 
+    // Compare the provided password with the hashed password
     const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) return res.status(400).json({ error: 'Invalid credentials' });
+    if (!isMatch) {
+      return res.status(400).json({ error: 'Invalid credentials' });
+    }
 
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
-    res.json({ token });
+    // Generate a JWT token with user ID
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
+      expiresIn: '1h',
+    });
+
+    // Send the token along with user's name and ID
+    res.json({
+      token,
+      name: user.name,
+      id: user._id,
+    });
+  } catch (error) {
+    console.error('Login error:', error);
+    res.status(500).json({ error: 'Server error. Please try again later.' });
+  }
 };
 
   
