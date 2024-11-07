@@ -78,20 +78,22 @@ exports.getPostsByBusiness = async (req, res) => {
 
 // Update a post by ID
 exports.updatePost = async (req, res) => {
+  const { postId } = req.params;
+  const userId = req.user.id; // authenticated user ID
   try {
-    const { postId } = req.params; // Get post ID from the request parameters
-    const updatedData = req.body; // Get updated post data from the request body
+      const post = await Post.findById(postId);
+      if (!post) return res.status(404).json({ message: 'Post not found' });
 
-    // Find the post by ID and update it
-    const updatedPost = await Post.findByIdAndUpdate(postId, updatedData, { new: true });
+      // Check if the post belongs to the authenticated user
+      if (post.creator.toString() !== userId) {
+          return res.status(403).json({ message: 'Unauthorized to edit this post' });
+      }
 
-    if (!updatedPost) {
-      return res.status(404).json({ message: 'Post not found' });
-    }
-
-    res.status(200).json({ message: 'Post updated successfully', post: updatedPost });
+      // Update the post with new data
+      const updatedPost = await Post.findByIdAndUpdate(postId, req.body, { new: true });
+      res.status(200).json({ message: 'Post updated successfully', post: updatedPost });
   } catch (error) {
-    res.status(500).json({ message: 'Error updating post', error: error.message });
+      res.status(500).json({ message: 'Failed to update post', error });
   }
 };
 
@@ -110,5 +112,31 @@ exports.deletePost = async (req, res) => {
     res.status(200).json({ message: 'Post deleted successfully' });
   } catch (error) {
     res.status(500).json({ message: 'Error deleting post', error: error.message });
+  }
+};
+
+exports.getUserPosts = async (req, res) => {
+  try {
+    // Extract userId from the request body
+    const { userId } = req.body; 
+
+    if (!userId) {
+      return res.status(400).json({ message: 'User ID is required' });
+    }
+
+    console.log('User ID:', userId);  // Debugging: Log the received user ID
+
+    // Find posts where the author ID matches the provided user ID
+    const posts = await Post.find({ 'author.id': userId });
+
+    if (posts.length === 0) {
+      return res.status(404).json({ message: 'No posts found for this user' });
+    }
+
+    // Send the posts in the response
+    res.status(200).json(posts);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Failed to retrieve posts', error });
   }
 };

@@ -26,5 +26,7 @@ router.put('/:postId', auth, postController.updatePost);
 // Route for deleting a post by ID (protected by auth)
 router.delete('/:postId', auth, postController.deletePost);
 
+// Route to get posts created by the logged-in user
+router.get('/myposts', auth, postController.getUserPosts);
 
 module.exports = router;
