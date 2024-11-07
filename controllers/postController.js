@@ -117,8 +117,8 @@ exports.deletePost = async (req, res) => {
 
 exports.getUserPosts = async (req, res) => {
   try {
-    // Extract userId from the request body
-    const { userId } = req.body; 
+    // Extract userId from the query parameters instead of the request body
+    const { userId } = req.query;
 
     if (!userId) {
       return res.status(400).json({ message: 'User ID is required' });
