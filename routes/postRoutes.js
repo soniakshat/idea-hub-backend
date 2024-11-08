@@ -29,4 +29,10 @@ router.delete('/:postId', auth, postController.deletePost);
 // Route to get posts created by the logged-in user
 router.get('/myposts', auth, postController.getUserPosts);
 
+// Route for updating upvote count (protected by auth)
+router.put('/:postId/upvote', auth, postController.updateUpvote);
+
+// Route for updating downvote count (protected by auth)
+router.put('/:postId/downvote', auth, postController.updateDownvote);
+
 module.exports = router;

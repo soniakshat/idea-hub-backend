@@ -124,7 +124,7 @@ exports.getUserPosts = async (req, res) => {
       return res.status(400).json({ message: 'User ID is required' });
     }
 
-    console.log('User ID:', userId);  // Debugging: Log the received user ID
+    // console.log('User ID:', userId);  // Debugging: Log the received user ID
 
     // Find posts where the author ID matches the provided user ID
     const posts = await Post.find({ 'author.id': userId });
@@ -138,5 +138,45 @@ exports.getUserPosts = async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Failed to retrieve posts', error });
+  }
+};
+
+// Update upvote count for a post
+exports.updateUpvote = async (req, res) => {
+  const { increment } = req.body;
+  try {
+    const post = await Post.findByIdAndUpdate(
+      req.params.postId,
+      { $inc: { upvotes: increment } },
+      { new: true }
+    );
+
+    if (!post) {
+      return res.status(404).json({ message: 'Post not found' });
+    }
+
+    res.status(200).json(post);
+  } catch (error) {
+    res.status(500).json({ message: 'Failed to update upvotes', error: error.message });
+  }
+};
+
+// Update downvote count for a post
+exports.updateDownvote = async (req, res) => {
+  const { increment } = req.body;
+  try {
+    const post = await Post.findByIdAndUpdate(
+      req.params.postId,
+      { $inc: { downvotes: increment } },
+      { new: true }
+    );
+
+    if (!post) {
+      return res.status(404).json({ message: 'Post not found' });
+    }
+
+    res.status(200).json(post);
+  } catch (error) {
+    res.status(500).json({ message: 'Failed to update downvotes', error: error.message });
   }
 };
