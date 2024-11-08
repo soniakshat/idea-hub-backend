@@ -20,4 +20,19 @@ router.get('/tag', auth, postController.getPostsByTag);
 // Route for getting posts by 'business' from the headers (protected by auth)
 router.get('/business', auth, postController.getPostsByBusiness);
 
+// Route for updating a post by ID (protected by auth)
+router.put('/:postId', auth, postController.updatePost);
+
+// Route for deleting a post by ID (protected by auth)
+router.delete('/:postId', auth, postController.deletePost);
+
+// Route to get posts created by the logged-in user
+router.get('/myposts', auth, postController.getUserPosts);
+
+// Route for updating upvote count (protected by auth)
+router.put('/:postId/upvote', auth, postController.updateUpvote);
+
+// Route for updating downvote count (protected by auth)
+router.put('/:postId/downvote', auth, postController.updateDownvote);
+
 module.exports = router;
