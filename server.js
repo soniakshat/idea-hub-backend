@@ -1,6 +1,7 @@
 // server.js
 
 const express = require('express');
+const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
 const dotenv = require('dotenv');
 const postRoutes = require('./routes/postRoutes');
@@ -23,7 +24,7 @@ mongoose.connect(process.env.MONGO_URI, {
 
 // Initialize Express
 const app = express();
-
+app.use(bodyParser.json());
 // Setup Cors
 const cors = require('cors');
 
@@ -51,8 +52,7 @@ app.use('/api/posts', postRoutes);
 app.use('/user', userRoutes);
 
 // Start the server
-if (process.env.PORT == "" || process.env.PORT == null)
-{
+if (process.env.PORT == "" || process.env.PORT == null) {
   console.error("No port set in env. Exiting the process...");
 }
 
