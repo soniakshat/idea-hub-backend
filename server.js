@@ -32,7 +32,7 @@ const cors = require('cors');
 // Configure CORS middleware
 app.use(cors({
   origin: '*', // Allow all origins temporarily
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], // Include OPTIONS
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'], // Include OPTIONS
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true, // If using cookies or HTTP authentication
 }));

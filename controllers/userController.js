@@ -49,6 +49,7 @@ exports.loginUser = async (req, res) => {
       name: user.name,
       id: user._id,
       is_moderator: user.is_moderator,
+      is_admin: user.is_admin,
     });
   } catch (error) {
     console.error('Login error:', error);
