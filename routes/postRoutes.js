@@ -35,4 +35,9 @@ router.put('/:postId/upvote', auth, postController.updateUpvote);
 // Route for updating downvote count (protected by auth)
 router.put('/:postId/downvote', auth, postController.updateDownvote);
 
+// Route for getting post by id
+router.get('/getPost/:postId', auth, postController.getPostById);
+
+router.put('/addComment/:postId', auth, postController.addComment)
+
 module.exports = router;

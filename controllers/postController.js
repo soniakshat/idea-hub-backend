@@ -30,11 +30,24 @@ exports.getAllPosts = async (req, res) => {
   }
 };
 
+exports.getPostById = async (req, res) => {
+  const { postId } = req.params;
+  try {
+    const post = await Post.findById(postId);
+    if (!post) {
+      return res.status(404).json({ error: 'Post not found' });
+    }
+    return res.status(200).json(post);
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching posts', error: error.message });
+  }
+};
+
 // Get limited posts based on 'n-posts' header
 exports.getLimitedPosts = async (req, res) => {
   try {
     const n = parseInt(req.headers['n-posts'], 10); // Get the 'n-posts' value from the headers
-    
+
     if (isNaN(n) || n <= 0) {
       return res.status(400).json({ message: 'Invalid number of posts requested' });
     }
@@ -81,19 +94,19 @@ exports.updatePost = async (req, res) => {
   const { postId } = req.params;
   const userId = req.user.id; // authenticated user ID
   try {
-      const post = await Post.findById(postId);
-      if (!post) return res.status(404).json({ message: 'Post not found' });
+    const post = await Post.findById(postId);
+    if (!post) return res.status(404).json({ message: 'Post not found' });
 
-      // Check if the post belongs to the authenticated user
-      if (post.creator.toString() !== userId) {
-          return res.status(403).json({ message: 'Unauthorized to edit this post' });
-      }
+    // Check if the post belongs to the authenticated user
+    if (post.creator.toString() !== userId) {
+      return res.status(403).json({ message: 'Unauthorized to edit this post' });
+    }
 
-      // Update the post with new data
-      const updatedPost = await Post.findByIdAndUpdate(postId, req.body, { new: true });
-      res.status(200).json({ message: 'Post updated successfully', post: updatedPost });
+    // Update the post with new data
+    const updatedPost = await Post.findByIdAndUpdate(postId, req.body, { new: true });
+    res.status(200).json({ message: 'Post updated successfully', post: updatedPost });
   } catch (error) {
-      res.status(500).json({ message: 'Failed to update post', error });
+    res.status(500).json({ message: 'Failed to update post', error });
   }
 };
 
@@ -178,5 +191,48 @@ exports.updateDownvote = async (req, res) => {
     res.status(200).json(post);
   } catch (error) {
     res.status(500).json({ message: 'Failed to update downvotes', error: error.message });
+  }
+};
+
+exports.addComment = async (req, res) => {
+  const { postId } = req.params;
+  const { id, author, content } = req.body;
+
+  // Validation
+  if (!id || !author || !content) {
+    return res.status(400).json({ error: 'id, author, and content are required fields.' });
+  }
+
+  try {
+    // Find the post by its ID
+    const post = await Post.findOne({ _id: postId });
+
+    if (!post) {
+      return res.status(404).json({ error: 'Post not found.' });
+    }
+
+    // Create the new comment
+    const newComment = {
+      id,
+      author,
+      content,
+      timestamp: new Date(),
+      upvotes: 0,
+      downvotes: 0,
+    };
+
+    // Add the comment to the comments array
+    post.comments.push(newComment);
+
+    // Save the updated post
+    await post.save();
+
+    res.status(200).json({
+      message: 'Comment added successfully.',
+      post,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Internal Server Error.' });
   }
 };

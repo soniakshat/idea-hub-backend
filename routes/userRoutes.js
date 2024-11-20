@@ -24,6 +24,4 @@ router.delete('/:userId', auth, deleteUserProfile);
 // Route for toggeling user's moderator status
 router.patch('/:userId/moderator', auth, toggleModeratorStatus);
 
-
-
 module.exports = router;
