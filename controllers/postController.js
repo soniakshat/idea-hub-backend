@@ -1,6 +1,7 @@
 // controllers/postController.js
 
 const Post = require('../models/Post');
+const User = require('../models/User');
 
 // Create a new post
 exports.createPost = async (req, res) => {
@@ -95,11 +96,16 @@ exports.updatePost = async (req, res) => {
   const userId = req.user.id; // authenticated user ID
   try {
     const post = await Post.findById(postId);
+    const user = await User.findById(userId);
+
+    if (!user) return res.status(404).json({ message: 'User not found' });
     if (!post) return res.status(404).json({ message: 'Post not found' });
 
     // Check if the post belongs to the authenticated user
-    if (post.creator.toString() !== userId) {
-      return res.status(403).json({ message: 'Unauthorized to edit this post' });
+    if (post.author.id.toString() !== userId) {
+      if (!user.is_moderator) {
+        return res.status(403).json({ message: 'Unauthorized to edit this post' });
+      }
     }
 
     // Update the post with new data
