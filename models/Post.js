@@ -25,7 +25,8 @@ const postSchema = new mongoose.Schema({
   timestamp: { type: Date, default: Date.now },
   upvotes: { type: Number, default: 0 },
   downvotes: { type: Number, default: 0 },
-  comments: [commentSchema]
+  comments: [commentSchema],
+  likes: [{ type: String, default: [] }]
 });
 
 module.exports = mongoose.model('Post', postSchema);

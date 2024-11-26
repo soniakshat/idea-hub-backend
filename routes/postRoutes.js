@@ -38,6 +38,10 @@ router.put('/:postId/downvote', auth, postController.updateDownvote);
 // Route for getting post by id
 router.get('/getPost/:postId', auth, postController.getPostById);
 
-router.put('/addComment/:postId', auth, postController.addComment)
+// Route to add new comment to a post
+router.put('/addComment/:postId', auth, postController.addComment);
+
+// Route to add like to a post
+router.put('/like/:postId/by/:userId', auth, postController.likePost);
 
 module.exports = router;

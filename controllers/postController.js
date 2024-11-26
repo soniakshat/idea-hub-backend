@@ -31,6 +31,35 @@ exports.getAllPosts = async (req, res) => {
   }
 };
 
+// Toggle like and dislike
+exports.likePost = async (req, res) => {
+  const { postId, userId } = req.params;
+
+  try {
+    const post = await Post.findById(postId);
+
+    if (!post) {
+      return res.status(404).json({ error: 'Post not found' });
+    }
+
+    // Check if the user has already liked the post
+    if (post.likes.includes(userId)) {
+      // Remove the userId from likes
+      post.likes = post.likes.filter((id) => id !== userId);
+      await post.save();
+      return res.status(200).json({ status: 0, message: 'Post Disliked successfully!' });
+    } else {
+      // Add the userId to likes
+      post.likes.push(userId);
+      await post.save();
+      return res.status(200).json({ status: 1, message: 'Post Liked successfully!' });
+    }
+  } catch (error) {
+    res.status(500).json({ message: 'Error toggling like for post.', error: error.message });
+  }
+};
+
+
 exports.getPostById = async (req, res) => {
   const { postId } = req.params;
   try {
