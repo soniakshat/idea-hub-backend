@@ -34,3 +34,6 @@ ehthumbs.db
 .idea/
 *.sublime-project
 *.sublime-workspace
+
+# Upload content
+uploads/resources/

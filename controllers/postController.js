@@ -1,23 +1,72 @@
 // controllers/postController.js
 
-const Post = require('../models/Post');
-const User = require('../models/User');
+const Post = require("../models/Post");
+const User = require("../models/User");
 
-// Create a new post
+const fs = require("fs");
+const path = require("path");
+
 exports.createPost = async (req, res) => {
   try {
-    const {
-      id, title, author, tags, business, status, content, timestamp, upvotes, downvotes, comments
-    } = req.body.post;
+    // Parse the post data from FormData
+    const postData = req.body.post ? JSON.parse(req.body.post) : null;
 
+    if (!postData) {
+      return res
+        .status(400)
+        .json({ message: "Post data is missing or invalid." });
+    }
+
+    const {
+      id,
+      title,
+      author,
+      tags,
+      business,
+      status,
+      content,
+      timestamp,
+      upvotes,
+      downvotes,
+      comments,
+    } = postData;
+
+    // Validate required fields
+    if (!id || !title || !author || !content) {
+      return res.status(400).json({
+        message: "Missing required fields: id, title, author, or content.",
+      });
+    }
+
+    // Get uploaded file path if a resource file is present
+    const resource = req.file ? req.file.path : null;
+
+    // Create a new post instance
     const newPost = new Post({
-      id, title, author, tags, business, status, content, timestamp, upvotes, downvotes, comments
+      id,
+      title,
+      author,
+      tags,
+      business,
+      status: status || "draft",
+      content,
+      timestamp: timestamp || new Date(),
+      upvotes: upvotes || 0,
+      downvotes: downvotes || 0,
+      comments: comments || [],
+      resource, // Add resource path if available
     });
 
+    // Save the post to the database
     await newPost.save();
-    res.status(201).json({ message: 'Post created successfully', post: newPost });
+
+    res
+      .status(201)
+      .json({ message: "Post created successfully", post: newPost });
   } catch (error) {
-    res.status(500).json({ message: 'Error creating post', error: error.message });
+    res
+      .status(500)
+      .json({ message: "Error creating post", error: error.message });
   }
 };
 
@@ -27,7 +76,9 @@ exports.getAllPosts = async (req, res) => {
     const posts = await Post.find(); // Retrieve all posts
     res.status(200).json(posts);
   } catch (error) {
-    res.status(500).json({ message: 'Error fetching posts', error: error.message });
+    res
+      .status(500)
+      .json({ message: "Error fetching posts", error: error.message });
   }
 };
 
@@ -39,7 +90,7 @@ exports.likePost = async (req, res) => {
     const post = await Post.findById(postId);
 
     if (!post) {
-      return res.status(404).json({ error: 'Post not found' });
+      return res.status(404).json({ error: "Post not found" });
     }
 
     // Check if the user has already liked the post
@@ -47,101 +98,151 @@ exports.likePost = async (req, res) => {
       // Remove the userId from likes
       post.likes = post.likes.filter((id) => id !== userId);
       await post.save();
-      return res.status(200).json({ status: 0, message: 'Post Disliked successfully!' });
+      return res
+        .status(200)
+        .json({ status: 0, message: "Post Disliked successfully!" });
     } else {
       // Add the userId to likes
       post.likes.push(userId);
       await post.save();
-      return res.status(200).json({ status: 1, message: 'Post Liked successfully!' });
+      return res
+        .status(200)
+        .json({ status: 1, message: "Post Liked successfully!" });
     }
   } catch (error) {
-    res.status(500).json({ message: 'Error toggling like for post.', error: error.message });
+    res
+      .status(500)
+      .json({ message: "Error toggling like for post.", error: error.message });
   }
 };
-
 
 exports.getPostById = async (req, res) => {
   const { postId } = req.params;
   try {
     const post = await Post.findById(postId);
     if (!post) {
-      return res.status(404).json({ error: 'Post not found' });
+      return res.status(404).json({ error: "Post not found" });
     }
     return res.status(200).json(post);
   } catch (error) {
-    res.status(500).json({ message: 'Error fetching posts', error: error.message });
+    res
+      .status(500)
+      .json({ message: "Error fetching posts", error: error.message });
   }
 };
 
 // Get limited posts based on 'n-posts' header
 exports.getLimitedPosts = async (req, res) => {
   try {
-    const n = parseInt(req.headers['n-posts'], 10); // Get the 'n-posts' value from the headers
+    const n = parseInt(req.headers["n-posts"], 10); // Get the 'n-posts' value from the headers
 
     if (isNaN(n) || n <= 0) {
-      return res.status(400).json({ message: 'Invalid number of posts requested' });
+      return res
+        .status(400)
+        .json({ message: "Invalid number of posts requested" });
     }
 
     const posts = await Post.find().limit(n); // Limit the number of posts
     res.status(200).json(posts);
   } catch (error) {
-    res.status(500).json({ message: 'Error fetching posts', error: error.message });
+    res
+      .status(500)
+      .json({ message: "Error fetching posts", error: error.message });
   }
 };
 
 // Get posts by tag (from headers)
 exports.getPostsByTag = async (req, res) => {
   try {
-    const tag = req.headers['tag']; // Get the 'tag' from headers
+    const tag = req.headers["tag"]; // Get the 'tag' from headers
     if (!tag) {
-      return res.status(400).json({ message: 'Tag is required in the headers' });
+      return res
+        .status(400)
+        .json({ message: "Tag is required in the headers" });
     }
 
     const posts = await Post.find({ tags: tag }); // Find posts with the given tag
     res.status(200).json(posts);
   } catch (error) {
-    res.status(500).json({ message: 'Error fetching posts by tag', error: error.message });
+    res
+      .status(500)
+      .json({ message: "Error fetching posts by tag", error: error.message });
   }
 };
 
 // Get posts by business (from headers)
 exports.getPostsByBusiness = async (req, res) => {
   try {
-    const business = req.headers['business']; // Get the 'business' from headers
+    const business = req.headers["business"]; // Get the 'business' from headers
     if (!business) {
-      return res.status(400).json({ message: 'Business is required in the headers' });
+      return res
+        .status(400)
+        .json({ message: "Business is required in the headers" });
     }
 
     const posts = await Post.find({ business: business }); // Find posts related to the given business
     res.status(200).json(posts);
   } catch (error) {
-    res.status(500).json({ message: 'Error fetching posts by business', error: error.message });
+    res.status(500).json({
+      message: "Error fetching posts by business",
+      error: error.message,
+    });
   }
 };
 
 // Update a post by ID
 exports.updatePost = async (req, res) => {
-  const { postId } = req.params;
-  const userId = req.user.id; // authenticated user ID
   try {
-    const post = await Post.findById(postId);
-    const user = await User.findById(userId);
+    const postData = req.body.post ? JSON.parse(req.body.post) : null;
 
-    if (!user) return res.status(404).json({ message: 'User not found' });
-    if (!post) return res.status(404).json({ message: 'Post not found' });
-
-    // Check if the post belongs to the authenticated user
-    if (post.author.id.toString() !== userId) {
-      if (!user.is_moderator) {
-        return res.status(403).json({ message: 'Unauthorized to edit this post' });
-      }
+    if (!postData) {
+      return res
+        .status(400)
+        .json({ message: "Post data is missing or invalid." });
     }
 
-    // Update the post with new data
-    const updatedPost = await Post.findByIdAndUpdate(postId, req.body, { new: true });
-    res.status(200).json({ message: 'Post updated successfully', post: updatedPost });
+    const { title, content, tags, business, status, removeResource } = postData;
+
+    if (!title || !content) {
+      return res
+        .status(400)
+        .json({ message: "Title and content are required." });
+    }
+
+    const post = await Post.findById(req.params.postId);
+    if (!post) {
+      return res.status(404).json({ message: "Post not found." });
+    }
+
+    // Handle resource updates
+    if (req.file) {
+      if (post.resource) {
+        fs.unlink(post.resource, (err) => {});
+      }
+      post.resource = req.file.path;
+    } else if (removeResource) {
+      if (post.resource) {
+        fs.unlink(post.resource, (err) => {});
+      }
+      post.resource = null;
+    }
+
+    // Update other fields
+    post.title = title;
+    post.content = content;
+    post.tags = tags;
+    post.business = business;
+    post.status = status || post.status;
+
+    const updatedPost = await post.save();
+
+    res
+      .status(200)
+      .json({ message: "Post updated successfully", post: updatedPost });
   } catch (error) {
-    res.status(500).json({ message: 'Failed to update post', error });
+    res
+      .status(500)
+      .json({ message: "Failed to update post", error: error.message });
   }
 };
 
@@ -154,12 +255,18 @@ exports.deletePost = async (req, res) => {
     const deletedPost = await Post.findByIdAndDelete(postId);
 
     if (!deletedPost) {
-      return res.status(404).json({ message: 'Post not found' });
+      return res.status(404).json({ message: "Post not found" });
     }
 
-    res.status(200).json({ message: 'Post deleted successfully' });
+    if (deletedPost.resource) {
+      fs.unlink(deletedPost.resource, (err) => {});
+    }
+
+    res.status(200).json({ message: "Post deleted successfully" });
   } catch (error) {
-    res.status(500).json({ message: 'Error deleting post', error: error.message });
+    res
+      .status(500)
+      .json({ message: "Error deleting post", error: error.message });
   }
 };
 
@@ -169,23 +276,20 @@ exports.getUserPosts = async (req, res) => {
     const { userId } = req.query;
 
     if (!userId) {
-      return res.status(400).json({ message: 'User ID is required' });
+      return res.status(400).json({ message: "User ID is required" });
     }
 
-    // console.log('User ID:', userId);  // Debugging: Log the received user ID
-
     // Find posts where the author ID matches the provided user ID
-    const posts = await Post.find({ 'author.id': userId });
+    const posts = await Post.find({ "author.id": userId });
 
     if (posts.length === 0) {
-      return res.status(404).json({ message: 'No posts found for this user' });
+      return res.status(404).json({ message: "No posts found for this user" });
     }
 
     // Send the posts in the response
     res.status(200).json(posts);
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Failed to retrieve posts', error });
+    res.status(500).json({ message: "Failed to retrieve posts", error });
   }
 };
 
@@ -200,12 +304,14 @@ exports.updateUpvote = async (req, res) => {
     );
 
     if (!post) {
-      return res.status(404).json({ message: 'Post not found' });
+      return res.status(404).json({ message: "Post not found" });
     }
 
     res.status(200).json(post);
   } catch (error) {
-    res.status(500).json({ message: 'Failed to update upvotes', error: error.message });
+    res
+      .status(500)
+      .json({ message: "Failed to update upvotes", error: error.message });
   }
 };
 
@@ -220,12 +326,14 @@ exports.updateDownvote = async (req, res) => {
     );
 
     if (!post) {
-      return res.status(404).json({ message: 'Post not found' });
+      return res.status(404).json({ message: "Post not found" });
     }
 
     res.status(200).json(post);
   } catch (error) {
-    res.status(500).json({ message: 'Failed to update downvotes', error: error.message });
+    res
+      .status(500)
+      .json({ message: "Failed to update downvotes", error: error.message });
   }
 };
 
@@ -235,7 +343,9 @@ exports.addComment = async (req, res) => {
 
   // Validation
   if (!id || !author || !content) {
-    return res.status(400).json({ error: 'id, author, and content are required fields.' });
+    return res
+      .status(400)
+      .json({ error: "id, author, and content are required fields." });
   }
 
   try {
@@ -243,7 +353,7 @@ exports.addComment = async (req, res) => {
     const post = await Post.findOne({ _id: postId });
 
     if (!post) {
-      return res.status(404).json({ error: 'Post not found.' });
+      return res.status(404).json({ error: "Post not found." });
     }
 
     // Create the new comment
@@ -263,11 +373,10 @@ exports.addComment = async (req, res) => {
     await post.save();
 
     res.status(200).json({
-      message: 'Comment added successfully.',
+      message: "Comment added successfully.",
       post,
     });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Internal Server Error.' });
+    res.status(500).json({ error: "Internal Server Error." });
   }
 };
